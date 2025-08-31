@@ -1,0 +1,31 @@
+import cv2
+from ultralytics import YOLO
+from utils.preprocess import preprocess_frame
+
+# Carrega o modelo YOLOv8 (ajuste o caminho conforme necessário)
+model = YOLO("model/best.pt")  # ou yolov8n.pt para testes com modelo base
+
+def detect_in_frame(frame):
+    """
+    Realiza a detecção em um frame usando YOLOv8 e retorna:
+    - O frame anotado com bounding boxes
+    - Um booleano indicando se há erva daninha detectada
+    """
+
+    # Pré-processamento da imagem
+    processed = preprocess_frame(frame, resize_to=(640, 640), to_rgb=True, denoise=False)
+
+    # Detecção
+    results = model(processed, verbose=False)
+
+    # Anota o frame original com as detecções
+    annotated_frame = results[0].plot()
+
+    # Verifica se há a classe desejada (classe 0 = erva daninha, por padrão)
+    has_weed = False
+    for c in results[0].boxes.cls:
+        if int(c) == 0:
+            has_weed = True
+            break
+
+    return annotated_frame, has_weed
